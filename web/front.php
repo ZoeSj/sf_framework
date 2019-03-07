@@ -8,7 +8,6 @@
  */
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Symfony\Component\Debug\Exception\FlattenException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -29,11 +28,11 @@ $controllerResolver = new ControllerResolver();
 $argumentResolver = new ArgumentResolver();
 
 $dispatcher = new EventDispatcher();
-$errorHandler = function (FlattenException $exception) {
-    $msg = 'Something went wrong!(' . $exception->getMessage() . ')';
-    return new Response($msg . $exception->getStatusCode());
-};
-$dispatcher->addSubscriber(new HttpKernel\EventListener\ExceptionListener($errorHandler));
+$listener = new HttpKernel\EventListener\ExceptionListener(
+    'Calendar\Controller\ErrorController::exception'
+);
+$dispatcher->addSubscriber(new HttpKernel\EventListener\ResponseListener('UTF-8'));
+$dispatcher->addSubscriber(new HttpKernel\EventListener\StreamedResponseListener());
 
 $framework = new Simplex\Framework($dispatcher, $matcher, $controllerResolver, $argumentResolver);
 
