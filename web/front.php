@@ -10,9 +10,12 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use Symfony\Component\HttpFoundation\Request;
 
-$request = Request::createFromGlobals();
 $routes = include __DIR__ . '/../src/app.php';
+$container = include __DIR__ . '/../src/container.php';
 
-$framework = new \Simplex\Framework($routes);
-$framework->handle($request)->send();
+$request = Request::createFromGlobals();
+
+$response = $container->get('framework')->handle($request);
+
+$response->send();
 
