@@ -16,8 +16,8 @@ use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 use Symfony\Component\Routing;
 
 $dispatcher = new EventDispatcher();
-$dispatcher->addListener('response', [new \Simplex\ContentLengthLister(), 'onResponse'], -255);
-$dispatcher->addListener('response', [new \Simplex\GoogleListener(), 'onResponse']);
+$dispatcher->addListener(new \Simplex\ContentLengthLister());
+$dispatcher->addListener(new \Simplex\GoogleListener());
 
 $controllerResolver = new ControllerResolver();
 $argumentResolver = new ArgumentResolver();
