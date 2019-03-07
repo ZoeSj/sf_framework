@@ -8,8 +8,10 @@
  */
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use Symfony\Component\Debug\Exception\FlattenException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel;
 use Symfony\Component\HttpKernel\Controller\ArgumentResolver;
@@ -17,25 +19,26 @@ use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 use Symfony\Component\Routing;
 
 $request = Request::createFromGlobals();
+$requestStack = new RequestStack();
 $routes = include __DIR__ . '/../src/app.php';
 
 $context = new Routing\RequestContext();
+
 $matcher = new Routing\Matcher\UrlMatcher($routes, $context);
-
-$dispatcher = new EventDispatcher();
-$dispatcher->addSubscriber(new \Simplex\ContentLengthLister());
-$dispatcher->addSubscriber(new \Simplex\GoogleListener());
-
 $controllerResolver = new ControllerResolver();
 $argumentResolver = new ArgumentResolver();
 
-$framework = new Simplex\Framework($dispatcher, $matcher, $controllerResolver, $argumentResolver);
-$framework = new HttpKernel\HttpCache\HttpCache(
-    $framework,
-    new HttpKernel\HttpCache\Store(__DIR__ . '/../cache')
-);
+$dispatcher = new EventDispatcher();
+$errorHandler = function (FlattenException $exception) {
+    $msg = 'Something went wrong!(' . $exception->getMessage() . ')';
+    return new Response($msg . $exception->getStatusCode());
+};
+$dispatcher->addSubscriber(new HttpKernel\EventListener\ExceptionListener($errorHandler));
 
-$framework->handle($request)->send();
+$framework = new Simplex\Framework($dispatcher, $matcher, $controllerResolver, $argumentResolver);
+
+$response = $framework->handle($request);
+$response->send();
 
 function render_template($request)
 {
