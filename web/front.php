@@ -16,18 +16,8 @@ use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 use Symfony\Component\Routing;
 
 $dispatcher = new EventDispatcher();
-$dispatcher->addListener('response', function (Simplex\ResponseEvent $event) {
-    $response = $event->getResponse();
-//    $headers = $response->headers;
-
-    if ($response->isRedirection()
-        || ($response->headers->has('Content-Type') && false === strpos($response->headers - get('Content-Type'), 'html'))
-        || 'html' !== $event->getRequest()->getRequestFormat()
-    ) {
-        return;
-    }
-    $response->setContent($response->getContent() . 'GA CODE');
-});
+$dispatcher->addListener('response', [new \Simplex\ContentLengthLister(), 'onResponse'], -255);
+$dispatcher->addListener('response', [new \Simplex\GoogleListener(), 'onResponse']);
 
 $controllerResolver = new ControllerResolver();
 $argumentResolver = new ArgumentResolver();
